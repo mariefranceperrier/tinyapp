@@ -51,6 +51,13 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls"); // Redirect the client to /urls
 });
 
+app.post("/urls/:id", (req, res) => {
+  const newLongURL = req.body.longURL; // Get the new longURL from the request body
+  const id = req.params.id; // Get the id from the request parameters
+  urlDatabase[id] = newLongURL; // Update the longURL in the urlDatabase
+  res.redirect("/urls"); // Redirect the client to /urls
+});
+
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
