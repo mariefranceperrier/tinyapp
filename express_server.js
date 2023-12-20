@@ -38,6 +38,14 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
+  const id = generateRandomString(); // Generate a random string
+  const longURL = req.body.longURL; // Get the longURL from the request body
+
+  urlDatabase[id] = longURL; // Add the new key-value pair to the urlDatabase
+  res.redirect(`/urls/${id}`); // Redirect the client to /urls/:id
+});
+
+app.post("/urls", (req, res) => {
   console.log(req.body);
   res.send("Ok");
 });
@@ -45,6 +53,11 @@ app.post("/urls", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
   res.render("urls_show", templateVars);
+});
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
 });
 
 app.get("/urls.json", (req, res) => {
