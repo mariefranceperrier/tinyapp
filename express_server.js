@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
+const cookieParser = require("cookie-parser");
 
 app.set("view engine", "ejs");
 
@@ -19,28 +20,15 @@ const generateRandomString = function () {
 };
 
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars);
-});
+//CREATE
 
 app.post("/login", (req, res) => {
   const username = req.body.username;
   res.cookie("username", username);
   res.redirect("/urls");
-});
-
-app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
 });
 
 app.post("/urls", (req, res) => {
@@ -51,17 +39,21 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${id}`); // Redirect the client to /urls/:id
 });
 
-app.post("/urls/:id/delete", (req, res) => {
-  const id = req.params.id; // Get the id from the request parameters
-  delete urlDatabase[id];  // Delete the key-value pair from the urlDatabase
-  res.redirect("/urls"); // Redirect the client to /urls
+
+//READ
+
+app.get("/", (req, res) => {
+  res.send("Hello!");
 });
 
-app.post("/urls/:id", (req, res) => {
-  const newLongURL = req.body.longURL; // Get the new longURL from the request body
-  const id = req.params.id; // Get the id from the request parameters
-  urlDatabase[id] = newLongURL; // Update the longURL in the urlDatabase
-  res.redirect("/urls"); // Redirect the client to /urls
+app.get("/hello", (req, res) => {
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
+app.get("/urls", (req, res) => {
+  const username = req.cookies["username"];   // Get the username from the cookies
+  const templateVars = { urls: urlDatabase, username }; // Pass the username to the templateVars object
+  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -77,6 +69,33 @@ app.get("/u/:id", (req, res) => {
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+
+
+
+//UPDATE
+
+app.post("/urls/:id", (req, res) => {
+  const newLongURL = req.body.longURL; // Get the new longURL from the request body
+  const id = req.params.id; // Get the id from the request parameters
+  urlDatabase[id] = newLongURL; // Update the longURL in the urlDatabase
+  res.redirect("/urls"); // Redirect the client to /urls
+});
+
+
+
+//DELETE
+
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id; // Get the id from the request parameters
+  delete urlDatabase[id];  // Delete the key-value pair from the urlDatabase
+  res.redirect("/urls"); // Redirect the client to /urls
+});
+
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
