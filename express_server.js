@@ -26,9 +26,9 @@ app.use(cookieParser());
 //CREATE
 
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("username", username);
-  res.redirect("/urls");
+  const username = req.body.username; // Get the username from the request body
+  res.cookie("username", username); // Set the username cookie
+  res.redirect("/urls"); 
 });
 
 app.post("/urls", (req, res) => {
@@ -36,9 +36,13 @@ app.post("/urls", (req, res) => {
   const longURL = req.body.longURL; // Get the longURL from the request body
 
   urlDatabase[id] = longURL; // Add the new key-value pair to the urlDatabase
-  res.redirect(`/urls/${id}`); // Redirect the client to /urls/:id
+  res.redirect(`/urls/${id}`); 
 });
 
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");    // Clear the username cookie
+  res.redirect("/urls");         
+});
 
 //READ
 
