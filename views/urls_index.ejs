@@ -18,7 +18,7 @@
 
 <body>
 
-  <%- include('./partials/_header') %>
+  <%- include('partials/_header') %>
   
   <main style="margin: 1em;">
     <h3>My URLs</h3>
@@ -34,23 +34,16 @@
       <tbody>
         <% for (let id in urls) { %>
           <tr>
-            <td>
-              <%= id %>
-            </td>
-            <td>
-              <%= urls[id] %>
-            </td>
-            <td>
-              <form method="POST" action="/urls/<%= id %>/edit">
-                <button type="submit" class="btn btn-primary">Edit</button>
-              </form>
+            <td><%= id %></td>
+            <td><%= urls[id] %></td>
+            <td><a href="/urls/<%= id %>" class="btn btn-primary">Edit</a></td>
             <td>
               <form method="POST" action="/urls/<%= id %>/delete">
                 <button type="submit" class="btn btn-danger">Delete</button>
-              </form> 
+              </form>
             </td>
           </tr>
-          <% } %>
+        <% } %>   
       </tbody>
     </table>
   </main>
