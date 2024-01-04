@@ -1,3 +1,21 @@
+<style>
+  header .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header .navbar-left {
+    display: flex;
+    gap: 15px;
+  }
+  header .navbar-right {
+    display: flex;
+    gap: 15px;
+    margin-left: auto;
+  }
+</style>
+
+
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
@@ -6,15 +24,23 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
+      <div class="navbar-left">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
-        <a class="nav-item nav-link" href="/register">Register</a>
-        <a class="nav-item nav-link" href="/login">Login</a>
+      </div>  
         <%if (user_id) { %>
-          <a class="nav-item nav-link" href="/logout">Logout</a>  
+          <div class="navbar-right">
+            <span class="nav-item nav-link">Logged in as: <%= user.email %></span>
+            <form action="/logout" method="POST">
+              <button type="submit" class="btn btn-link">Logout</button>
+            </form>
+          </div>
+          <%} else if (!user_id) { %>
+            <div class="navbar-right">
+              <a class="nav-item nav-link" href="/register">Register</a>
+              <a class="nav-item nav-link" href="/login">Login</a>
+            </div>
         <% } %>
-      </div>
     </div>
   </nav>
 </header>
