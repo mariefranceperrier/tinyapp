@@ -33,6 +33,14 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+
+app.get("/register", (req, res) => {
+  const username = req.cookies.username;   // Get the username from the cookies
+  const templateVars = { username };
+  res.render("register", templateVars);
+});
+
+
 app.get("/urls/new", (req, res) => {
   const username = req.cookies.username;   // Get the username from the cookies
   const templateVars = { username };
