@@ -55,11 +55,15 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-
 app.get("/register", (req, res) => {
   res.render("register");
 });
 
+app.get("/login", (req, res) => {
+  const user_id = req.cookies.user;   // Get the user_id from the cookies
+  const templateVars = { user_id };
+  res.render("login", templateVars);
+});
 
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies.user;   // Get the user_id from the cookies
@@ -100,8 +104,10 @@ app.post("/register", (req, res) => {
 
   if (!email || !password) { // If the email or password is empty
     res.status(400).send("Please enter an email and password"); // Send a 400 status code
+    return;
   } else if (emailExists(email)) { // If the email already exists
     res.status(400).send("Email already exists"); // Send a 400 status code
+    return;
   } else {
     users[id] = { // Add the new key-value pair to the users object
     id,
