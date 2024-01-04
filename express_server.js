@@ -35,6 +35,15 @@ const users = {
   },
 };
 
+const emailExists = function (email) {
+  for (const user in users) {
+    if (users[user].email === email) {
+      return true;
+    }
+  }
+  return false;
+}
+
 
 //READ
 
@@ -89,11 +98,17 @@ app.post("/register", (req, res) => {
   const email = req.body.email; // Get the email from the request body
   const password = req.body.password; // Get the password from the request body
 
-  users[id] = { // Add the new key-value pair to the users object
+  if (!email || !password) { // If the email or password is empty
+    res.status(400).send("Please enter an email and password"); // Send a 400 status code
+  } else if (emailExists(email)) { // If the email already exists
+    res.status(400).send("Email already exists"); // Send a 400 status code
+  } else {
+    users[id] = { // Add the new key-value pair to the users object
     id,
     email,
     password,
-  };
+    };
+  }
   res.cookie("user_id", id); // Set the user_id cookie
 
   console.log(users); // Log the users object to the console
