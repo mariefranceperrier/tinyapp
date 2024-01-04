@@ -3,20 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+    integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" 
+    crossorigin="anonymous"
+    href="My URLs" />
+  <title>Login - TinyApp</title>
+</head>
+
   <title>Document</title>
 </head>
+
 <body>
-  <form action="/login" method="post">
-    <div>
-      <label for="email">Email</label>
-      <input type="email" name="email" id="email" placeholder="Email">
-    </div>
-    <div>
-      <label for="password">Password</label>
-      <input type="password" name="password" id="password" placeholder="Password">
-    </div>
-    <button type="submit">Login</button>
-  </form>
-  
+  <%- include('partials/_header') %>
+  <main style="margin: 1em;">
+    <h3>Login</h3>
+      <form action="/login" method="post">
+        <div>
+          <label for="Email address">Email</label>
+          <input 
+            type="email" 
+            name="email" 
+            id="email" 
+            placeholder="Enter email"
+            style="width: 300px; margin: 1em">
+        </div>
+      <div>
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          name="password" 
+          id="password" 
+          placeholder="Password"
+          style="width: 300px; margin: 1em">
+        </div>
+      <button type="submit">Login</button>
+    </form>
+  </main>
 </body>
 </html>
