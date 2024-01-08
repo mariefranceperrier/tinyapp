@@ -129,8 +129,11 @@ app.post("/register", (req, res) => {
   const email = req.body.email; // Get the email from the request body
   const password = req.body.password; // Get the password from the request body
 
-  if (!email || !password) { // If the email or password is empty
-    res.status(400).send("Please enter an email and password"); // Send a 400 status code
+  if (!email) { // If the email is empty
+    res.status(400).send("Please enter an email"); // Send a 400 status code
+    return;
+  } else if (!password) { // If the password is empty
+    res.status(400).send("Please enter a password"); // Send a 400 status code
     return;
   } else if (emailExists(email)) { // If the email already exists
     res.status(400).send("Email already exists"); // Send a 400 status code
@@ -155,8 +158,11 @@ app.post("/login", (req, res) => {
   const email = req.body.email; // Get the email from the request body
   const password = req.body.password; // Get the password from the request body
 
-  if (!email || !password) { // If the email or password is empty
-    res.status(403).send("Please enter an email and password"); // Send a 403 status code
+  if (!email) { // If the email is empty
+    res.status(403).send("Please enter an email"); // Send a 403 status code
+    return;
+  } else if (!password) { // If the password is empty
+    res.status(403).send("Please enter a password"); // Send a 403 status code
     return;
   }
   
@@ -181,7 +187,7 @@ app.post("/urls", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");    // Clear the user_id cookie
-  res.redirect("/login");
+  res.status(200).redirect("/login");
 });
 
 
