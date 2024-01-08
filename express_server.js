@@ -35,6 +35,15 @@ const users = {
   },
 };
 
+const getUserById = function (id) {
+  for (const user in users) {
+    if (users[user].id === id) {
+      return users[user];
+    }
+  }
+  return false;
+};
+
 const emailExists = function (email) {
   for (const user in users) {
     if (users[user].email === email) {
@@ -44,14 +53,16 @@ const emailExists = function (email) {
   return false;
 };
 
-const getUserById = function (id) {
-  for (const user in users) {
-    if (users[user].id === id) {
-      return users[user];
+const validateUserCredentials = function (email, password) {
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.email === email && user.password === password) {
+      return user;
     }
   }
-  return false;
+  return null;
 };
+
 
 
 //READ
@@ -67,34 +78,34 @@ app.get("/hello", (req, res) => {
 app.get("/register", (req, res) => {
   const user_id = req.cookies.user_id;   // Get the user_id from the cookies
   const user = getUserById(user_id); // Get the user object from the user_id
-  const templateVars = { user_id, user };
+  const templateVars = { user_id, user }; // Pass the user_id to the templateVars object
   res.render("register", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  const user_id = req.cookies.user_id;   // Get the user_id from the cookies
-  const user = getUserById(user_id); // Get the user object from the user_id
+  const user_id = req.cookies.user_id;  
+  const user = getUserById(user_id); 
   const templateVars = { user_id, user };
   res.render("login", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies.user_id;   // Get the user_id from the cookies
-  const user = getUserById(user_id); // Get the user object from the user_id
+  const user_id = req.cookies.user_id;  
+  const user = getUserById(user_id); 
   const templateVars = { user_id, user };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies.user_id;   // Get the user_id from the cookies
-  const user = getUserById(user_id); // Get the user object from the user_id
-  const templateVars = { urls: urlDatabase, user_id, user }; // Pass the user_id to the templateVars object
+  const user_id = req.cookies.user_id;   
+  const user = getUserById(user_id); 
+  const templateVars = { urls: urlDatabase, user_id, user }; 
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
   const user_id = req.cookies.user_id;
-  const user = getUserById(user_id); // Get the user object from the user_id
+  const user = getUserById(user_id); 
   const id = req.params.id;
   const longURL = urlDatabase[req.params.id];
   const templateVars = { id, longURL, user_id, user };
@@ -124,14 +135,16 @@ app.post("/register", (req, res) => {
   } else if (emailExists(email)) { // If the email already exists
     res.status(400).send("Email already exists"); // Send a 400 status code
     return;
-  } else {
-    users[id] = { // Add the new key-value pair to the users object
-    id,
-    email,
-    password,
-    };
   }
-  res.cookie("user_id", users[id].id); // Set the user_id cookie
+  
+  const newUser = { // Create the user object using the id variable
+      id,
+      email,
+      password,
+    };
+  
+  users[id] = newUser; // Add the new user to the users object
+  res.cookie("user_id", id); // Set the user_id cookie using the id variable
 
   console.log(users); // Log the users object to the console
   res.redirect("/urls"); // Redirect the client to /urls
@@ -145,22 +158,17 @@ app.post("/login", (req, res) => {
   if (!email || !password) { // If the email or password is empty
     res.status(403).send("Please enter an email and password"); // Send a 403 status code
     return;
-  } else if (!emailExists(email)) { // If the email does not exist
-    res.status(403).send("Email does not exist"); // Send a 403 status code
-    return;
-  } else {
-    for (const user in users) {
-      if (users[user].email === email && users[user].password !== password) { // If the email exists but the password does not match
-        res.status(403).send("Password does not match"); // Send a 403 status code
-        return;
-      } else if (users[user].email === email && users[user].password === password) { // If the email and password match
-        res.cookie("user_id", users[user].id); // Set the user_id cookie
-        res.redirect("/urls"); // Redirect the client to /urls
-        return;
-      }
-    }
   }
-}); 
+  
+  const user = validateUserCredentials(email, password); // Validate the user credentials
+    
+    if (user) { // If the user credentials are valid
+      res.cookie("user_id", user.id); // Set the user_id cookie
+      res.redirect("/urls"); // Redirect the client to /urls
+    } else { // If the user credentials are invalid
+      res.status(403).send("Invalid email or password"); // Send a 403 status code
+    }
+  });
 
 
 app.post("/urls", (req, res) => {
