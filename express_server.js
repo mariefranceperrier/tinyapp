@@ -9,8 +9,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "1a2b3c",
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "1a2b3c",
+  }
 };
 
 const generateRandomString = function () {
@@ -114,6 +120,7 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
+
 app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id;   
   const user = getUserById(user_id); 
@@ -121,25 +128,26 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+
 app.get("/urls/:id", (req, res) => {
   const user_id = req.cookies.user_id;
   const user = getUserById(user_id); 
   const id = req.params.id;
-  const longURL = urlDatabase[req.params.id];
-  const templateVars = { id, longURL, user_id, user };
 
-  for (const url in urlDatabase) {
-    if (url === id) {
-      res.render("urls_show", templateVars);
-      return;
-    } else {
-      res.status(404).send("Short URL does not exist");
-    }
+  if (!urlDatabase[id]) { // If the shortURL does not exist
+    res.status(404).send("Short URL does not exist"); // Send a 404 status code
+    return;
   }
+
+  const longURL = urlDatabase[id].longURL; // Get the longURL from the urlDatabase
+  const templateVars = { id, longURL, user_id, user };
+      
+  res.render("urls_show", templateVars);
 });
 
+
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
 
@@ -211,7 +219,11 @@ app.post("/urls", (req, res) => {
     res.status(401).send("Please login to create a new URL"); // Send a 401 status code
     return;
   } else { // If the user is logged in
-    urlDatabase[id] = longURL; // Add the new key-value pair to the urlDatabase
+    urlDatabase[id] = { // Create the url object using the id variable
+      longURL,
+      userID: req.cookies.user_id,
+    };
+    console.log(urlDatabase); // Log the urlDatabase object to the console
     res.redirect(`/urls/${id}`);
   }
 });
@@ -227,9 +239,9 @@ app.post("/logout", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id; // Get the id from the request parameters
-  const longURL = urlDatabase[req.params.id]; // Get the longURL from the urlDatabase
+  // const longURL = urlDatabase[req.params.id]  // Get the longURL from the urlDatabase
   const newLongURL = req.body.longURL; // Get the newLongURL from the request body
-  urlDatabase[id] = newLongURL;  // update the key-value pair in the urlDatabase
+  urlDatabase[id].longURL = newLongURL;  // update the key-value pair in the urlDatabase
 
   res.redirect("/urls"); // Redirect the client to /urls
 });
