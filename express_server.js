@@ -79,21 +79,39 @@ app.get("/register", (req, res) => {
   const user_id = req.cookies.user_id;   // Get the user_id from the cookies
   const user = getUserById(user_id); // Get the user object from the user_id
   const templateVars = { user_id, user }; // Pass the user_id to the templateVars object
-  res.render("register", templateVars);
+
+  if (user_id) { // If the user is registered in
+    res.redirect("/urls"); // Redirect the client to /urls
+    return;
+  } else { // If the user is not logged in
+    res.render("register", templateVars); // Render the register template
+  }
 });
 
 app.get("/login", (req, res) => {
-  const user_id = req.cookies.user_id;  
-  const user = getUserById(user_id); 
+  const user_id = req.cookies.user_id;
+  const user = getUserById(user_id);
   const templateVars = { user_id, user };
-  res.render("login", templateVars);
+  
+  if (user_id) { // If the user is logged in
+    res.redirect("/urls"); // Redirect the client to /urls
+    return;
+  } else { // If the user is not logged in
+    res.render("login", templateVars); // Render the login template
+  }
 });
 
 app.get("/urls/new", (req, res) => {
   const user_id = req.cookies.user_id;  
   const user = getUserById(user_id); 
   const templateVars = { user_id, user };
-  res.render("urls_new", templateVars);
+  
+  if (!user_id) { // If the user is not logged in
+    res.redirect("/login"); // Redirect the client to /login
+    return;
+  } else { // If the user is logged in
+    res.render("urls_new", templateVars); // Render the urls_new template
+  }
 });
 
 app.get("/urls", (req, res) => {
@@ -109,7 +127,15 @@ app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[req.params.id];
   const templateVars = { id, longURL, user_id, user };
-  res.render("urls_show", templateVars);
+
+  for (const url in urlDatabase) {
+    if (url === id) {
+      res.render("urls_show", templateVars);
+      return;
+    } else {
+      res.status(404).send("Short URL does not exist");
+    }
+  }
 });
 
 app.get("/u/:id", (req, res) => {
@@ -181,9 +207,15 @@ app.post("/urls", (req, res) => {
   const id = generateRandomString(); // Generate a random string
   const longURL = req.body.longURL; // Get the longURL from the request body
   
-  urlDatabase[id] = longURL; // Add the new key-value pair to the urlDatabase
-  res.redirect(`/urls/${id}`);
+  if (!req.cookies.user_id) { // If the user is not logged in
+    res.status(401).send("Please login to create a new URL"); // Send a 401 status code
+    return;
+  } else { // If the user is logged in
+    urlDatabase[id] = longURL; // Add the new key-value pair to the urlDatabase
+    res.redirect(`/urls/${id}`);
+  }
 });
+
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");    // Clear the user_id cookie
@@ -201,7 +233,6 @@ app.post("/urls/:id", (req, res) => {
 
   res.redirect("/urls"); // Redirect the client to /urls
 });
-
 
 
 //DELETE
