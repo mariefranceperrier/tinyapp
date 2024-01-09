@@ -69,6 +69,16 @@ const validateUserCredentials = function (email, password) {
   return null;
 };
 
+const urlsForUser = function (id) {     // returns an object of urls that belong to the user with id
+  const userUrls = {};
+  for (const url in urlDatabase) {
+    if (urlDatabase[url].userID === id) {
+      userUrls[url] = urlDatabase[url];
+    }
+  }
+  return userUrls;
+};
+
 
 
 //READ
@@ -87,11 +97,10 @@ app.get("/register", (req, res) => {
   const templateVars = { user_id, user }; // Pass the user_id to the templateVars object
 
   if (user_id) { // If the user is registered in
-    res.redirect("/urls"); // Redirect the client to /urls
-    return;
-  } else { // If the user is not logged in
-    res.render("register", templateVars); // Render the register template
+    return res.redirect("/urls"); // Redirect the client to /urls
   }
+  // If the user is not logged in
+  res.render("register", templateVars); // Render the register template
 });
 
 app.get("/login", (req, res) => {
@@ -100,11 +109,10 @@ app.get("/login", (req, res) => {
   const templateVars = { user_id, user };
   
   if (user_id) { // If the user is logged in
-    res.redirect("/urls"); // Redirect the client to /urls
-    return;
-  } else { // If the user is not logged in
-    res.render("login", templateVars); // Render the login template
+    return res.redirect("/urls"); // Redirect the client to /urls
   }
+  // If the user is not logged in  
+  res.render("login", templateVars); // Render the login template
 });
 
 app.get("/urls/new", (req, res) => {
@@ -113,18 +121,23 @@ app.get("/urls/new", (req, res) => {
   const templateVars = { user_id, user };
   
   if (!user_id) { // If the user is not logged in
-    res.redirect("/login"); // Redirect the client to /login
-    return;
-  } else { // If the user is logged in
-    res.render("urls_new", templateVars); // Render the urls_new template
+    return res.redirect("/login"); // Redirect the client to /login
   }
+  // If the user is logged in
+  res.render("urls_new", templateVars); // Render the urls_new template
 });
 
 
 app.get("/urls", (req, res) => {
   const user_id = req.cookies.user_id;   
   const user = getUserById(user_id); 
-  const templateVars = { urls: urlDatabase, user_id, user }; 
+  const urls = urlsForUser(user_id);
+  const templateVars = { urls, user_id, user }; 
+
+  if (!user_id) { // If the user is not logged in
+    return res.status(401).send("Please login to view your URLs"); // Send a 401 status code 
+  }
+  // If the user is logged in
   res.render("urls_index", templateVars);
 });
 
@@ -133,10 +146,16 @@ app.get("/urls/:id", (req, res) => {
   const user_id = req.cookies.user_id;
   const user = getUserById(user_id); 
   const id = req.params.id;
+  const userUrls = urlsForUser(user_id);
 
   if (!urlDatabase[id]) { // If the shortURL does not exist
-    res.status(404).send("Short URL does not exist"); // Send a 404 status code
-    return;
+    return res.status(404).send("Short URL does not exist"); // Send a 404 status code
+  }
+  if (!user_id) { // If the user is not logged in
+    return res.status(401).send("Please login to view your URLs"); // Send a 401 status code
+  }
+  if (!userUrls[id]) { // If the user does not own the shortURL
+    return res.status(403).send("You do not own this URL"); // Send a 403 status code
   }
 
   const longURL = urlDatabase[id].longURL; // Get the longURL from the urlDatabase
@@ -151,6 +170,7 @@ app.get("/u/:id", (req, res) => {
   res.redirect(longURL);
 });
 
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
@@ -164,14 +184,13 @@ app.post("/register", (req, res) => {
   const password = req.body.password; // Get the password from the request body
 
   if (!email) { // If the email is empty
-    res.status(400).send("Please enter an email"); // Send a 400 status code
-    return;
-  } else if (!password) { // If the password is empty
-    res.status(400).send("Please enter a password"); // Send a 400 status code
-    return;
-  } else if (emailExists(email)) { // If the email already exists
-    res.status(400).send("Email already exists"); // Send a 400 status code
-    return;
+    return res.status(400).send("Please enter an email"); // Send a 400 status code
+  }
+  if (!password) { // If the password is empty
+    return res.status(400).send("Please enter a password"); // Send a 400 status code  
+  }
+  if (emailExists(email)) { // If the email already exists
+    return res.status(400).send("Email already exists"); // Send a 400 status code
   }
   
   const newUser = { // Create the user object using the id variable
@@ -193,16 +212,15 @@ app.post("/login", (req, res) => {
   const password = req.body.password; // Get the password from the request body
 
   if (!email) { // If the email is empty
-    res.status(403).send("Please enter an email"); // Send a 403 status code
-    return;
-  } else if (!password) { // If the password is empty
-    res.status(403).send("Please enter a password"); // Send a 403 status code
-    return;
+    return res.status(403).send("Please enter an email"); // Send a 403 status code
+  }
+  if (!password) { // If the password is empty
+    return res.status(403).send("Please enter a password"); // Send a 403 status code
   }
   
-  const user = validateUserCredentials(email, password); // Validate the user credentials
+const user = validateUserCredentials(email, password); // Validate the user credentials
     
-    if (user) { // If the user credentials are valid
+  if (user) { // If the user credentials are valid
       res.cookie("user_id", user.id); // Set the user_id cookie
       res.redirect("/urls"); // Redirect the client to /urls
     } else { // If the user credentials are invalid
@@ -216,8 +234,8 @@ app.post("/urls", (req, res) => {
   const longURL = req.body.longURL; // Get the longURL from the request body
   
   if (!req.cookies.user_id) { // If the user is not logged in
-    res.status(401).send("Please login to create a new URL"); // Send a 401 status code
-    return;
+    return res.status(401).send("Please login to create a new URL"); // Send a 401 status code
+    
   } else { // If the user is logged in
     urlDatabase[id] = { // Create the url object using the id variable
       longURL,
@@ -238,11 +256,25 @@ app.post("/logout", (req, res) => {
 //UPDATE
 
 app.post("/urls/:id", (req, res) => {
+  const user_id = req.cookies.user_id; // Get the user_id from the cookies
   const id = req.params.id; // Get the id from the request parameters
-  // const longURL = urlDatabase[req.params.id]  // Get the longURL from the urlDatabase
+  const userUrls = urlsForUser(user_id); // Get the userUrls object using the user_id
+  
+  if (!urlDatabase[id]) { // If the shortURL does not exist
+    return res.status(404).send("Short URL does not exist"); // Send a 404 status code
+  }
+  
   const newLongURL = req.body.longURL; // Get the newLongURL from the request body
   urlDatabase[id].longURL = newLongURL;  // update the key-value pair in the urlDatabase
-
+  
+  if (!user_id) { // If the user is not logged in
+    return res.status(401).send("Please login to view and edit your URLs"); // Send a 401 status code
+  }
+  
+  if (userUrls[id] === undefined) { // If the user does not own the shortURL
+    return res.status(403).send("You do not have permission to edit this URL"); // Send a 403 status code
+  }
+  
   res.redirect("/urls"); // Redirect the client to /urls
 });
 
@@ -250,7 +282,20 @@ app.post("/urls/:id", (req, res) => {
 //DELETE
 
 app.post("/urls/:id/delete", (req, res) => {
+  const user_id = req.cookies.user_id;
   const id = req.params.id; // Get the id from the request parameters
+  const userUrls = urlsForUser(user_id);
+
+  if (!urlDatabase[id]) { // If the shortURL does not exist
+    return res.status(404).send("Short URL does not exist"); // Send a 404 status code
+  }
+  if (!user_id) { // If the user is not logged in
+    return res.status(401).send("Please login to delete your URLs"); // Send a 401 status code
+  }
+  if (userUrls[id] === undefined) { // If the user does not own the shortURL
+    return res.status(403).send("You do not have permission to delete this URL"); // Send a 403 status code
+  }
+   
   delete urlDatabase[id];  // Delete the key-value pair from the urlDatabase
   res.redirect("/urls"); // Redirect the client to /urls
 });
