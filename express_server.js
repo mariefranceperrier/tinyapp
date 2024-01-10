@@ -1,13 +1,27 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+
+const generateRandomString = function () {
+  let result = "";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
+};
+
+const secretKey = generateRandomString();
+app.use(cookieSession({
+  name: "session",   // name of the cookie
+  keys: [secretKey], // keys used to encrypt and decrypt cookies
+}));
 
 const urlDatabase = {
   "b2xVn2": {
@@ -18,15 +32,6 @@ const urlDatabase = {
     longURL: "http://www.google.com",
     userID: "1a2b3c",
   }
-};
-
-const generateRandomString = function () {
-  let result = "";
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
 };
 
 const users = {
@@ -93,7 +98,7 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const user_id = req.cookies.user_id;   // Get the user_id from the cookies
+  const user_id = req.session.user_id;   // Get the user_id from the cookies
   const user = getUserById(user_id); // Get the user object from the user_id
   const password = req.body.password; // Get the password from the request body
   const templateVars = { user_id, user, password }; // Pass the user_id to the templateVars object
@@ -106,7 +111,7 @@ app.get("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const user = getUserById(user_id);
   const password = req.body.password;
   const templateVars = { user_id, user, password };
@@ -120,7 +125,7 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const user_id = req.cookies.user_id;  
+  const user_id = req.session.user_id;  
   const user = getUserById(user_id); 
   const templateVars = { user_id, user };
   
@@ -133,7 +138,7 @@ app.get("/urls/new", (req, res) => {
 
 
 app.get("/urls", (req, res) => {
-  const user_id = req.cookies.user_id;   
+  const user_id = req.session.user_id;   
   const user = getUserById(user_id); 
   const urls = urlsForUser(user_id);
   const templateVars = { urls, user_id, user }; 
@@ -143,7 +148,7 @@ app.get("/urls", (req, res) => {
 
 
 app.get("/urls/:id", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const user = getUserById(user_id); 
   const id = req.params.id;
   const userUrls = urlsForUser(user_id);
@@ -200,7 +205,7 @@ const hashedPassword = bcrypt.hashSync(password, 10); // Hash the password using
     };
   
   users[id] = newUser; // Add the new user to the users object
-  res.cookie("user_id", id); // Set the user_id cookie using the id variable
+  req.session.user_id = id; // Set the user_id cookie using the id variable
 
   console.log(users); // Log the users object to the console
   res.redirect("/urls"); // Redirect the client to /urls
@@ -218,7 +223,7 @@ app.post("/login", (req, res) => {
   const user = validateUserCredentials(email, password); // Validate the user credentials
     
   if (user && bcrypt.compareSync(password, user.password)) { // If the user credentials are valid && the password matches
-      res.cookie("user_id", user.id); // Set the user_id cookie
+      req.session.user_id = user.id; // Set the user_id cookie
       res.redirect("/urls"); // Redirect the client to /urls
     } else { // If the user credentials are invalid
       res.status(403).send("Invalid email or password"); // Send a 403 status code
@@ -230,13 +235,13 @@ app.post("/urls", (req, res) => {
   const id = generateRandomString(); // Generate a random string
   const longURL = req.body.longURL; // Get the longURL from the request body
   
-  if (!req.cookies.user_id) { // If the user is not logged in
+  if (!req.session.user_id) { // If the user is not logged in
     return res.status(401).send("Please login to create a new URL"); // Send a 401 status code
     
   } else { // If the user is logged in
     urlDatabase[id] = { // Create the url object using the id variable
       longURL,
-      userID: req.cookies.user_id,
+      userID: req.session.user_id,
     };
     console.log(urlDatabase); // Log the urlDatabase object to the console
     res.redirect(`/urls/${id}`);
@@ -245,7 +250,7 @@ app.post("/urls", (req, res) => {
 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");    // Clear the user_id cookie
+  req.session = null;    // Clear the user_id cookie
   res.status(200).redirect("/login");
 });
 
@@ -253,7 +258,7 @@ app.post("/logout", (req, res) => {
 //UPDATE
 
 app.post("/urls/:id", (req, res) => {
-  const user_id = req.cookies.user_id; // Get the user_id from the cookies
+  const user_id = req.session.user_id; // Get the user_id from the cookies
   const id = req.params.id; // Get the id from the request parameters
   const userUrls = urlsForUser(user_id); // Get the userUrls object using the user_id
   
@@ -279,7 +284,7 @@ app.post("/urls/:id", (req, res) => {
 //DELETE
 
 app.post("/urls/:id/delete", (req, res) => {
-  const user_id = req.cookies.user_id;
+  const user_id = req.session.user_id;
   const id = req.params.id; // Get the id from the request parameters
   const userUrls = urlsForUser(user_id);
 
