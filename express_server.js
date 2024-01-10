@@ -100,8 +100,7 @@ app.get("/hello", (req, res) => {
 app.get("/register", (req, res) => {
   const user_id = req.session.user_id;   // Get the user_id from the cookies
   const user = getUserById(user_id); // Get the user object from the user_id
-  const password = req.body.password; // Get the password from the request body
-  const templateVars = { user_id, user, password }; // Pass the user_id to the templateVars object
+  const templateVars = { user_id, user }; // Pass the user_id to the templateVars object
 
   if (user_id) { // If the user is registered in
     return res.redirect("/urls"); // Redirect the client to /urls
@@ -113,8 +112,7 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
   const user_id = req.session.user_id;
   const user = getUserById(user_id);
-  const password = req.body.password;
-  const templateVars = { user_id, user, password };
+  const templateVars = { user_id, user };
   
   // If the user is not logged in  
   res.render("login", templateVars); // Render the login template
@@ -130,7 +128,7 @@ app.get("/urls/new", (req, res) => {
   const templateVars = { user_id, user };
   
   if (!user_id) { // If the user is not logged in
-    return res.redirect("/login"); // Redirect the client to /login
+    return res.status(401).send("Please login to create a new URL"); // Send a 401 status code
   }
   // If the user is logged in
   res.render("urls_new", templateVars); // Render the urls_new template
