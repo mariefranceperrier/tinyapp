@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 
@@ -62,7 +63,7 @@ const emailExists = function (email) {
 const validateUserCredentials = function (email, password) {
   for (const userId in users) {
     const user = users[userId];
-    if (user.email === email && user.password === password) {
+    if (user.email === email && bcrypt.compareSync(password, user.password)) {
       return user;
     }
   }
@@ -94,7 +95,8 @@ app.get("/hello", (req, res) => {
 app.get("/register", (req, res) => {
   const user_id = req.cookies.user_id;   // Get the user_id from the cookies
   const user = getUserById(user_id); // Get the user object from the user_id
-  const templateVars = { user_id, user }; // Pass the user_id to the templateVars object
+  const password = req.body.password; // Get the password from the request body
+  const templateVars = { user_id, user, password }; // Pass the user_id to the templateVars object
 
   if (user_id) { // If the user is registered in
     return res.redirect("/urls"); // Redirect the client to /urls
@@ -106,13 +108,15 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
   const user_id = req.cookies.user_id;
   const user = getUserById(user_id);
-  const templateVars = { user_id, user };
+  const password = req.body.password;
+  const templateVars = { user_id, user, password };
+  
+  // If the user is not logged in  
+  res.render("login", templateVars); // Render the login template
   
   if (user_id) { // If the user is logged in
     return res.redirect("/urls"); // Redirect the client to /urls
   }
-  // If the user is not logged in  
-  res.render("login", templateVars); // Render the login template
 });
 
 app.get("/urls/new", (req, res) => {
@@ -134,10 +138,6 @@ app.get("/urls", (req, res) => {
   const urls = urlsForUser(user_id);
   const templateVars = { urls, user_id, user }; 
 
-  if (!user_id) { // If the user is not logged in
-    return res.status(401).send("Please login to view your URLs"); // Send a 401 status code 
-  }
-  // If the user is logged in
   res.render("urls_index", templateVars);
 });
 
@@ -183,12 +183,12 @@ app.post("/register", (req, res) => {
   const email = req.body.email; // Get the email from the request body
   const password = req.body.password; // Get the password from the request body
 
-  if (!email) { // If the email is empty
-    return res.status(400).send("Please enter an email"); // Send a 400 status code
+  if (!email || !password) { // If the email or password is empty
+    return res.status(400).send("Please enter both email and password"); // Send a 400 status code
   }
-  if (!password) { // If the password is empty
-    return res.status(400).send("Please enter a password"); // Send a 400 status code  
-  }
+
+const hashedPassword = bcrypt.hashSync(password, 10); // Hash the password using bcrypt
+
   if (emailExists(email)) { // If the email already exists
     return res.status(400).send("Email already exists"); // Send a 400 status code
   }
@@ -196,7 +196,7 @@ app.post("/register", (req, res) => {
   const newUser = { // Create the user object using the id variable
       id,
       email,
-      password,
+      password: hashedPassword, // Use the hashed password
     };
   
   users[id] = newUser; // Add the new user to the users object
@@ -211,16 +211,13 @@ app.post("/login", (req, res) => {
   const email = req.body.email; // Get the email from the request body
   const password = req.body.password; // Get the password from the request body
 
-  if (!email) { // If the email is empty
-    return res.status(403).send("Please enter an email"); // Send a 403 status code
-  }
-  if (!password) { // If the password is empty
-    return res.status(403).send("Please enter a password"); // Send a 403 status code
+  if (!email || !password) { // If the email or password is empty
+    return res.status(403).send("Please enter both email and password"); // Send a 403 status code
   }
   
-const user = validateUserCredentials(email, password); // Validate the user credentials
+  const user = validateUserCredentials(email, password); // Validate the user credentials
     
-  if (user) { // If the user credentials are valid
+  if (user && bcrypt.compareSync(password, user.password)) { // If the user credentials are valid && the password matches
       res.cookie("user_id", user.id); // Set the user_id cookie
       res.redirect("/urls"); // Redirect the client to /urls
     } else { // If the user credentials are invalid
