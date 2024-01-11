@@ -5,7 +5,7 @@ const getUserByEmail = function (email, users) {
       return user;
     }
   }
-  return null; // if no email found in database
+  return {}; // if no email found in database
 };
 
 module.exports = { getUserByEmail };

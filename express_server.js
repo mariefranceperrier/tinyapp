@@ -183,12 +183,12 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Please enter both email and password"); // Send a 400 status code
   }
 
-const hashedPassword = bcrypt.hashSync(password, 10); // Hash the password using bcrypt
-
-  if (helpers.getUserByEmail(email, users)) { // If the email already exists
+  const existingUser = helpers.getUserByEmail(email, users); 
+  if (Object.keys(existingUser).length !== 0) { // If the email already exists (if returned object not empty)
     return res.status(400).send("Email already exists"); // Send a 400 status code
-  }
-  
+}
+
+  const hashedPassword = bcrypt.hashSync(password, 10); // Hash the password using bcrypt
   const newUser = { // Create the user object using the id variable
       id,
       email,
