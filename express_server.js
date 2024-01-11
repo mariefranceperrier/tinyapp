@@ -1,13 +1,20 @@
-const express = require("express");
+import express from 'express'
+import cookieSession from 'cookie-session'
+import bcrypt from 'bcryptjs'
+import { users, urlDatabase, getUserByEmail, getUserById, urlsForUser } from './helpers.js'
 const app = express();
 const PORT = 8080; // default port 8080
-const cookieSession = require("cookie-session");
-const bcrypt = require("bcryptjs");
-const helpers = require("./helpers.js");
 
 app.set("view engine", "ejs");
 
 app.use(express.urlencoded({ extended: true }));
+
+app.use(cookieSession({
+  name: "session",   // name of the cookie
+  keys: ["sHekHinaH"], // secret keys used to encrypt the cookie
+  maxAge: 24 * 60 * 60 *1000 // 24 hours
+}));
+
 
 const generateRandomString = function () {
   let result = "";
@@ -18,46 +25,6 @@ const generateRandomString = function () {
   return result;
 };
 
-const secretKey = generateRandomString();
-app.use(cookieSession({
-  name: "session",   // name of the cookie
-  keys: [secretKey], // keys used to encrypt and decrypt cookies
-}));
-
-const urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "1a2b3c",
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userID: "1a2b3c",
-  }
-};
-
-const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  "user2RandomID": {  
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-};
-
-const getUserById = function (id) {
-  for (const user in users) {
-    if (users[user].id === id) {
-      return users[user];
-    }
-  }
-  return false;
-};
-
-
 const validateUserCredentials = function (email, password) {
   for (const userId in users) {
     const user = users[userId];
@@ -67,17 +34,6 @@ const validateUserCredentials = function (email, password) {
   }
   return null;
 };
-
-const urlsForUser = function (id) {     // returns an object of urls that belong to the user with id
-  const userUrls = {};
-  for (const url in urlDatabase) {
-    if (urlDatabase[url].userID === id) {
-      userUrls[url] = urlDatabase[url];
-    }
-  }
-  return userUrls;
-};
-
 
 
 //READ
@@ -183,12 +139,15 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Please enter both email and password"); // Send a 400 status code
   }
 
-  const existingUser = helpers.getUserByEmail(email, users); 
-  if (Object.keys(existingUser).length !== 0) { // If the email already exists (if returned object not empty)
+  const existingUser = getUserByEmail(email, users); 
+  if (existingUser) { // If the email already exists (if returned user is not undefined)
     return res.status(400).send("Email already exists"); // Send a 400 status code
-}
+  }
+  
+  const saltRound = 10;
+  const salt = bcrypt.genSaltSync(saltRound); // Generate a salt using bcrypt
+  const hashedPassword = bcrypt.hashSync(password, salt); // Hash the password using bcrypt
 
-  const hashedPassword = bcrypt.hashSync(password, 10); // Hash the password using bcrypt
   const newUser = { // Create the user object using the id variable
       id,
       email,
