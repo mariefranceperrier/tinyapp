@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
+const helpers = require("./helpers.js");
 
 app.set("view engine", "ejs");
 
@@ -56,14 +57,6 @@ const getUserById = function (id) {
   return false;
 };
 
-const emailExists = function (email) {
-  for (const user in users) {
-    if (users[user].email === email) {
-      return true;
-    }
-  }
-  return false;
-};
 
 const validateUserCredentials = function (email, password) {
   for (const userId in users) {
@@ -192,7 +185,7 @@ app.post("/register", (req, res) => {
 
 const hashedPassword = bcrypt.hashSync(password, 10); // Hash the password using bcrypt
 
-  if (emailExists(email)) { // If the email already exists
+  if (helpers.getUserByEmail(email, users)) { // If the email already exists
     return res.status(400).send("Email already exists"); // Send a 400 status code
   }
   
