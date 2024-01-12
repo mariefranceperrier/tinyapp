@@ -38,10 +38,10 @@ This is a simple URL shortener web application built with Express and Node.js. U
 
 ## Routes
 
-/: Home page, redirects to login.
-/register: Register a new account.
-/login: Log in to an existing account.
-/urls/new: Create a new short URL.
-/urls: View and manage user-specific URLs.
-/urls/:id: View, edit, or delete a specific short URL.
-/u/:id: Redirects to the original long URL.
+◾ /: Home page, redirects to login.
+◾ /register: Register a new account.
+◾ /login: Log in to an existing account.
+◾ /urls/new: Create a new short URL.
+◾ /urls: View and manage user-specific URLs.
+◾ /urls/:id: View, edit, or delete a specific short URL.
+◾ /u/:id: Redirects to the original long URL.
