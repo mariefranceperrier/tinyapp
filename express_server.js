@@ -30,11 +30,15 @@ const validateUserCredentials = function (email, password) {
 //READ
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
-});
+  const user_id = req.session.user_id; 
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+  if (user_id) { // If the user is logged in
+    return res.redirect("/urls"); // Redirect the client to /urls
+  }
+
+  if (!user_id) { // If the user is not logged in
+    return res.redirect("/login"); // Redirect the client to /login
+  }
 });
 
 app.get("/register", (req, res) => {
@@ -54,12 +58,11 @@ app.get("/login", (req, res) => {
   const user = getUserById(user_id);
   const templateVars = { user_id, user };
   
-  // If the user is not logged in  
-  res.render("login", templateVars); // Render the login template
-  
   if (user_id) { // If the user is logged in
     return res.redirect("/urls"); // Redirect the client to /urls
   }
+  // If the user is not logged in
+  res.render("login", templateVars); //  Render the login template 
 });
 
 app.get("/urls/new", (req, res) => {
@@ -68,10 +71,12 @@ app.get("/urls/new", (req, res) => {
   const templateVars = { user_id, user };
   
   if (!user_id) { // If the user is not logged in
-    return res.status(401).send("Please login to create a new URL"); // Send a 401 status code
+  return res.status(401).send("Please login to create a new URL"); // Send a 401 status code
   }
+  
   // If the user is logged in
   res.render("urls_new", templateVars); // Render the urls_new template
+  
 });
 
 
@@ -80,8 +85,12 @@ app.get("/urls", (req, res) => {
   const user = getUserById(user_id); 
   const urls = urlsForUser(user_id);
   const templateVars = { urls, user_id, user }; 
-
+  
+  if (!user_id) { // If the user is not logged in
+    return res.status(401).send("Please login to view your URLs"); // Send a 401 status code 
+  }
   res.render("urls_index", templateVars);
+
 });
 
 
@@ -109,8 +118,14 @@ app.get("/urls/:id", (req, res) => {
 
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL;
-  res.redirect(longURL);
+  const id = req.params.id;
+  
+  if (urlDatabase[id]) { // If the shortURL exists
+    const longURL = urlDatabase[id].longURL;
+    res.redirect(longURL);
+  } else { // If the shortURL does not exist}
+    return res.status(404).send("URL does not exist"); // Send a 404 status code
+  }
 });
 
 
@@ -182,7 +197,7 @@ app.post("/urls", (req, res) => {
   } else { // If the user is logged in
     urlDatabase[id] = { // Create the url object using the id variable
       longURL,
-      userID: req.session.user_id,
+      userID: req.session.user_id, 
     };
     console.log(urlDatabase); // Log the urlDatabase object to the console
     res.redirect(`/urls/${id}`);
@@ -206,18 +221,16 @@ app.post("/urls/:id", (req, res) => {
   if (!urlDatabase[id]) { // If the shortURL does not exist
     return res.status(404).send("Short URL does not exist"); // Send a 404 status code
   }
-  
-  const newLongURL = req.body.longURL; // Get the newLongURL from the request body
-  urlDatabase[id].longURL = newLongURL;  // update the key-value pair in the urlDatabase
-  
   if (!user_id) { // If the user is not logged in
     return res.status(401).send("Please login to view and edit your URLs"); // Send a 401 status code
   }
-  
   if (userUrls[id] === undefined) { // If the user does not own the shortURL
     return res.status(403).send("You do not have permission to edit this URL"); // Send a 403 status code
   }
-  
+
+  // If the user is logged in and owns the shortURL
+  const newLongURL = req.body.longURL; // Get the newLongURL from the request body
+  urlDatabase[id].longURL = newLongURL;  // update the key-value pair in the urlDatabase
   res.redirect("/urls"); // Redirect the client to /urls
 });
 
@@ -238,7 +251,8 @@ app.post("/urls/:id/delete", (req, res) => {
   if (userUrls[id] === undefined) { // If the user does not own the shortURL
     return res.status(403).send("You do not have permission to delete this URL"); // Send a 403 status code
   }
-   
+  
+  // If the user is logged in and owns the shortURL
   delete urlDatabase[id];  // Delete the key-value pair from the urlDatabase
   res.redirect("/urls"); // Redirect the client to /urls
 });
