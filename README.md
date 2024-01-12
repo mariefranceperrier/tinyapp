@@ -1,4 +1,4 @@
-# URL Shortener Web App
+# TinyApp : A URL Shortener Web App
 
 This is a simple URL shortener web application built with Express and Node.js. Users can register, log in, create short URLs, and manage them.
 
