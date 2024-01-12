@@ -1,7 +1,9 @@
 import express from 'express'
 import cookieSession from 'cookie-session'
 import bcrypt from 'bcryptjs'
-import { users, urlDatabase, getUserByEmail, getUserById, urlsForUser } from './helpers.js'
+import { users, urlDatabase } from "./userData.js";
+import { generateRandomString, getUserByEmail, getUserById, urlsForUser } from './helpers.js'
+
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -16,22 +18,11 @@ app.use(cookieSession({
 }));
 
 
-const generateRandomString = function () {
-  let result = "";
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 6; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-};
-
 const validateUserCredentials = function (email, password) {
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email && bcrypt.compareSync(password, user.password)) {
+  const user = getUserByEmail(email, users);
+    if (user && bcrypt.compareSync(password, user.password)) {
       return user;
     }
-  }
   return null;
 };
 
@@ -144,7 +135,7 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Email already exists"); // Send a 400 status code
   }
   
-  const saltRound = 10;
+  const saltRound = 10; 
   const salt = bcrypt.genSaltSync(saltRound); // Generate a salt using bcrypt
   const hashedPassword = bcrypt.hashSync(password, salt); // Hash the password using bcrypt
 

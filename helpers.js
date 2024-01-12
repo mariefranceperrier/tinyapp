@@ -1,25 +1,12 @@
-export const users = {
-  "userRandomID": {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  "user2RandomID": {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-};
+import {users, urlDatabase} from "./userData.js";
 
-export const urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "1a2b3c",
-  },
-  "9sm5xK": {
-    longURL: "http://www.google.com",
-    userID: "1a2b3c",
+export const generateRandomString = function () {
+  let result = "";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 6; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
+  return result;
 };
 
 export const getUserByEmail = function (email, users) {
