@@ -1,6 +1,14 @@
-# TinyApp : A URL Shortener Web App
+# TinyApp Project : A URL Shortener Web App
 
 This is a simple URL shortener web application built with Express and Node.js. Users can register, log in, create short URLs, and manage them.
+
+## Final Product
+
+!["Screenshot of register page"](https://github.com/mariefranceperrier/tinyapp/blob/master/docs/register-page.png.png?raw=true)
+!["Screenshot of login page"](https://github.com/mariefranceperrier/tinyapp/blob/master/docs/login-page.png.png?raw=true)
+!["Screenshot of create new URLs page"](https://github.com/mariefranceperrier/tinyapp/blob/master/docs/urls-new.png.png?raw=true)
+!["Screenshot of URLs ID page"](https://github.com/mariefranceperrier/tinyapp/blob/master/docs/urls-id.png.png?raw=true)
+!["Screenshot of URLs page"](https://github.com/mariefranceperrier/tinyapp/blob/master/docs/urls-page.png.png?raw=true)
 
 ## Features
 
@@ -9,7 +17,7 @@ This is a simple URL shortener web application built with Express and Node.js. U
 - View, edit, and delete user-specific URLs
 - Responsive design for a better user experience
 
-## Technologies Used
+## Dependencies
 
 - Node.js
 - Express
