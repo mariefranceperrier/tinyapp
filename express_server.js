@@ -70,13 +70,12 @@ app.get("/urls/new", (req, res) => {
   const user = getUserById(user_id); 
   const templateVars = { user_id, user };
   
-  if (!user_id) { // If the user is not logged in
-  return res.status(401).send("Please login to create a new URL"); // Send a 401 status code
-  }
-  
   // If the user is logged in
   res.render("urls_new", templateVars); // Render the urls_new template
-  
+
+  if (!user_id) { // If the user is not logged in
+    res.redirect("/login"); // Redirect the client to /login
+  }
 });
 
 
